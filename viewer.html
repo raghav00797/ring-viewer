@@ -52,8 +52,10 @@
 
   <script type="module">
     import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js";
-    import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/loaders/GLTFLoader.js";
-    import { RGBELoader } from "https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/loaders/RGBELoader.js";
+
+    // ✅ IMPORTANT: Use /addons/ paths (works in GitHub Pages)
+    import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.159.0/addons/loaders/GLTFLoader.js";
+    import { RGBELoader } from "https://cdn.jsdelivr.net/npm/three@0.159.0/addons/loaders/RGBELoader.js";
 
     // ✅ Your Drive file ID (GLB)
     const DRIVE_FILE_ID = "1xQaoIODOj3p1vJjOzdoQf9qt9KaP9XuK";
@@ -134,8 +136,7 @@
     });
 
     // ====== Environment HDR (for reflections) ======
-    // ✅ For now we use a public HDRI (so it works on GitHub Pages)
-    // Later we can host your own /hdr/studio.hdr in GitHub if you want.
+    // ✅ Public HDRI so it works instantly on GitHub Pages
     const HDR_URL = "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr";
 
     new RGBELoader().load(HDR_URL, (hdr) => {
@@ -289,4 +290,3 @@
   </script>
 </body>
 </html>
-
