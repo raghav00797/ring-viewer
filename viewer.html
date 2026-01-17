@@ -4,262 +4,40 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ring Viewer</title>
-
   <style>
     html, body { margin: 0; height: 100%; background: #ffffff; overflow: hidden; }
-    #wrap { position: fixed; inset: 0; }
-    canvas { width: 100%; height: 100%; display: block; touch-action: none; }
-
-    .ui {
-      position: fixed; left: 12px; bottom: 12px; display: flex; gap: 10px;
-      font-family: Arial, sans-serif; z-index: 10;
-    }
-    .btn {
-      background: rgba(0,0,0,0.06);
-      border: 1px solid rgba(0,0,0,0.10);
-      color: #111;
-      padding: 10px 12px;
-      border-radius: 12px;
-      cursor: pointer;
-      user-select: none;
-      backdrop-filter: blur(10px);
-    }
-    .btn:active { transform: scale(0.98); }
-
+    model-viewer { width: 100vw; height: 100vh; background: #ffffff; }
     .hint {
       position: fixed; right: 12px; top: 12px;
       color: rgba(0,0,0,0.65);
       font-family: Arial, sans-serif;
       font-size: 13px;
       z-index: 10;
-      background: rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.85);
       padding: 8px 10px;
       border-radius: 12px;
       border: 1px solid rgba(0,0,0,0.08);
     }
   </style>
 
-  <!-- ✅ IMPORT MAP (Fixes: "three" is a bare specifier) -->
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
-    }
-  }
-  </script>
+  <!-- ✅ Model Viewer (Google official) -->
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </head>
 
 <body>
-  <div id="wrap">
-    <canvas id="c"></canvas>
-  </div>
+  <div class="hint">Drag to rotate • Pinch to zoom</div>
 
-  <div class="hint">Drag to rotate • Scroll/pinch to zoom</div>
-  <div class="ui">
-    <div class="btn" id="btnAuto">Auto: ON</div>
-    <div class="btn" id="btnReset">Reset</div>
-  </div>
+  <!-- ✅ Your GLB from Drive -->
+  <model-viewer
+    src="https://drive.google.com/uc?export=download&id=1xQaoIODOj3p1vJjOzdoQf9qt9KaP9XuK"
+    camera-controls
+    auto-rotate
+    rotation-per-second="30deg"
+    shadow-intensity="0"
+    exposure="1.3"
+    environment-image="neutral"
+    style="background:#ffffff;">
+  </model-viewer>
 
-  <script type="module">
-    import * as THREE from "three";
-    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-    import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-
-    // ✅ Your Google Drive GLB file ID
-    const DRIVE_FILE_ID = "1xQaoIODOj3p1vJjOzdoQf9qt9KaP9XuK";
-    const GLB_URL = `https://drive.google.com/uc?export=download&id=${DRIVE_FILE_ID}`;
-
-    const canvas = document.getElementById("c");
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.3;
-
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#ffffff");
-
-    const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.01, 250);
-    camera.position.set(0, 2.8, 6);
-
-    // Lights
-    scene.add(new THREE.AmbientLight(0xffffff, 0.25));
-
-    const l1 = new THREE.DirectionalLight(0xffffff, 6.3);
-    l1.position.set(12, 18, 14);
-    scene.add(l1);
-
-    const l2 = new THREE.DirectionalLight(0xffffff, 3.4);
-    l2.position.set(-12, 10, 12);
-    scene.add(l2);
-
-    const l3 = new THREE.DirectionalLight(0xffffff, 0.6);
-    l3.position.set(0, -12, -12);
-    scene.add(l3);
-
-    // Group to rotate ring
-    const ringGroup = new THREE.Group();
-    scene.add(ringGroup);
-
-    // Materials
-    const platinumMaterial = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color("#d8d8d8"),
-      metalness: 1,
-      roughness: 0.12,
-      envMapIntensity: 5.2,
-      clearcoat: 0.65,
-      clearcoatRoughness: 0.10,
-    });
-
-    const diamondMaterial = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color("#ffffff"),
-      metalness: 0,
-      roughness: 0.005,
-      transmission: 0.25,
-      transparent: true,
-      opacity: 1,
-      ior: 2.42,
-      thickness: 0.03,
-      attenuationColor: new THREE.Color("#ffffff"),
-      attenuationDistance: 999,
-      envMapIntensity: 22,
-      reflectivity: 1,
-      clearcoat: 1,
-      clearcoatRoughness: 0,
-      specularIntensity: 10,
-      specularColor: new THREE.Color(1, 1, 1),
-    });
-
-    // HDR reflections
-    const HDR_URL = "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr";
-    new RGBELoader().load(HDR_URL, (hdr) => {
-      hdr.mapping = THREE.EquirectangularReflectionMapping;
-      scene.environment = hdr;
-    });
-
-    // Load GLB
-    const loader = new GLTFLoader();
-    loader.load(
-      GLB_URL,
-      (gltf) => {
-        const model = gltf.scene;
-
-        model.traverse((obj) => {
-          if (!obj.isMesh) return;
-          const name = (obj.name || "").toUpperCase();
-          obj.material = name.startsWith("STONE_MAIN") ? diamondMaterial : platinumMaterial;
-          obj.frustumCulled = false;
-        });
-
-        // Center + scale
-        const box = new THREE.Box3().setFromObject(model);
-        const size = new THREE.Vector3();
-        const center = new THREE.Vector3();
-        box.getSize(size);
-        box.getCenter(center);
-        model.position.sub(center);
-
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const scale = 1.7 / maxDim;
-        model.scale.setScalar(scale);
-
-        ringGroup.add(model);
-        ringGroup.rotation.set(0.15, 0.8, 0);
-      },
-      undefined,
-      (err) => {
-        console.error("❌ GLB load error:", err);
-        alert("GLB failed to load. Check Google Drive sharing = Anyone with link Viewer.");
-      }
-    );
-
-    // Drag + inertia
-    let isDragging = false;
-    let lastX = 0;
-    let lastY = 0;
-    let velX = 0;
-    let velY = 0;
-
-    const dragSpeed = 0.0075;
-    const damping = 0.93;
-
-    let autoRotate = true;
-
-    canvas.addEventListener("pointerdown", (e) => {
-      isDragging = true;
-      canvas.setPointerCapture(e.pointerId);
-      lastX = e.clientX;
-      lastY = e.clientY;
-    });
-
-    canvas.addEventListener("pointermove", (e) => {
-      if (!isDragging) return;
-      const dx = e.clientX - lastX;
-      const dy = e.clientY - lastY;
-      lastX = e.clientX;
-      lastY = e.clientY;
-
-      velX = dx * dragSpeed;
-      velY = dy * dragSpeed;
-
-      ringGroup.rotation.y += velX;
-      ringGroup.rotation.x += velY;
-    });
-
-    canvas.addEventListener("pointerup", (e) => {
-      isDragging = false;
-      try { canvas.releasePointerCapture(e.pointerId); } catch {}
-    });
-
-    // Zoom
-    window.addEventListener("wheel", (e) => {
-      const delta = Math.sign(e.deltaY);
-      camera.position.z += delta * 0.35;
-      camera.position.z = THREE.MathUtils.clamp(camera.position.z, 2.8, 10.0);
-    }, { passive: true });
-
-    // Buttons
-    const btnAuto = document.getElementById("btnAuto");
-    const btnReset = document.getElementById("btnReset");
-
-    btnAuto.addEventListener("click", () => {
-      autoRotate = !autoRotate;
-      btnAuto.textContent = autoRotate ? "Auto: ON" : "Auto: OFF";
-    });
-
-    btnReset.addEventListener("click", () => {
-      ringGroup.rotation.set(0.15, 0.8, 0);
-      velX = 0;
-      velY = 0;
-      camera.position.set(0, 2.8, 6);
-    });
-
-    // Resize
-    window.addEventListener("resize", () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-    });
-
-    // Animate
-    function animate() {
-      requestAnimationFrame(animate);
-
-      if (!isDragging) {
-        ringGroup.rotation.y += velX;
-        ringGroup.rotation.x += velY;
-        velX *= damping;
-        velY *= damping;
-
-        if (autoRotate) ringGroup.rotation.y += 0.003;
-      }
-
-      renderer.render(scene, camera);
-    }
-    animate();
-  </script>
 </body>
 </html>
