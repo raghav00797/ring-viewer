@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ring Viewer</title>
+
   <style>
     html, body { margin: 0; height: 100%; background: #ffffff; overflow: hidden; }
     #wrap { position: fixed; inset: 0; }
@@ -37,6 +38,16 @@
       border: 1px solid rgba(0,0,0,0.08);
     }
   </style>
+
+  <!-- ✅ IMPORT MAP (Fixes: "three" is a bare specifier) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
+    }
+  }
+  </script>
 </head>
 
 <body>
@@ -51,10 +62,9 @@
   </div>
 
   <script type="module">
-    // ✅ IMPORTANT: use only UNPKG (fixes MIME + CORS)
-    import * as THREE from "https://unpkg.com/three@0.159.0/build/three.module.js";
-    import { GLTFLoader } from "https://unpkg.com/three@0.159.0/examples/jsm/loaders/GLTFLoader.js";
-    import { RGBELoader } from "https://unpkg.com/three@0.159.0/examples/jsm/loaders/RGBELoader.js";
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 
     // ✅ Your Google Drive GLB file ID
     const DRIVE_FILE_ID = "1xQaoIODOj3p1vJjOzdoQf9qt9KaP9XuK";
@@ -94,7 +104,7 @@
     const ringGroup = new THREE.Group();
     scene.add(ringGroup);
 
-    // Materials (your JA look)
+    // Materials
     const platinumMaterial = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color("#d8d8d8"),
       metalness: 1,
@@ -123,7 +133,7 @@
       specularColor: new THREE.Color(1, 1, 1),
     });
 
-    // HDR environment reflections
+    // HDR reflections
     const HDR_URL = "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr";
     new RGBELoader().load(HDR_URL, (hdr) => {
       hdr.mapping = THREE.EquirectangularReflectionMapping;
@@ -139,11 +149,8 @@
 
         model.traverse((obj) => {
           if (!obj.isMesh) return;
-
           const name = (obj.name || "").toUpperCase();
-          if (name.startsWith("STONE_MAIN")) obj.material = diamondMaterial;
-          else obj.material = platinumMaterial;
-
+          obj.material = name.startsWith("STONE_MAIN") ? diamondMaterial : platinumMaterial;
           obj.frustumCulled = false;
         });
 
@@ -190,7 +197,6 @@
 
     canvas.addEventListener("pointermove", (e) => {
       if (!isDragging) return;
-
       const dx = e.clientX - lastX;
       const dy = e.clientY - lastY;
       lastX = e.clientX;
