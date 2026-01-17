@@ -51,16 +51,13 @@
   </div>
 
   <script type="module">
-    // ✅ Use an import-map so loaders can import "three" correctly
+    // ✅ IMPORTANT: use only UNPKG (fixes MIME + CORS)
     import * as THREE from "https://unpkg.com/three@0.159.0/build/three.module.js";
-
     import { GLTFLoader } from "https://unpkg.com/three@0.159.0/examples/jsm/loaders/GLTFLoader.js";
     import { RGBELoader } from "https://unpkg.com/three@0.159.0/examples/jsm/loaders/RGBELoader.js";
 
-    // ✅ Your Drive file ID
+    // ✅ Your Google Drive GLB file ID
     const DRIVE_FILE_ID = "1xQaoIODOj3p1vJjOzdoQf9qt9KaP9XuK";
-
-    // ✅ Direct download URL
     const GLB_URL = `https://drive.google.com/uc?export=download&id=${DRIVE_FILE_ID}`;
 
     const canvas = document.getElementById("c");
@@ -93,11 +90,11 @@
     l3.position.set(0, -12, -12);
     scene.add(l3);
 
-    // Rotate group
+    // Group to rotate ring
     const ringGroup = new THREE.Group();
     scene.add(ringGroup);
 
-    // Materials
+    // Materials (your JA look)
     const platinumMaterial = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color("#d8d8d8"),
       metalness: 1,
@@ -126,9 +123,8 @@
       specularColor: new THREE.Color(1, 1, 1),
     });
 
-    // HDR environment
+    // HDR environment reflections
     const HDR_URL = "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr";
-
     new RGBELoader().load(HDR_URL, (hdr) => {
       hdr.mapping = THREE.EquirectangularReflectionMapping;
       scene.environment = hdr;
@@ -141,27 +137,15 @@
       (gltf) => {
         const model = gltf.scene;
 
-        let stoneCount = 0;
-        let metalCount = 0;
-
         model.traverse((obj) => {
           if (!obj.isMesh) return;
 
           const name = (obj.name || "").toUpperCase();
-
-          if (name.startsWith("STONE_MAIN")) {
-            obj.material = diamondMaterial;
-            stoneCount++;
-          } else {
-            obj.material = platinumMaterial;
-            metalCount++;
-          }
+          if (name.startsWith("STONE_MAIN")) obj.material = diamondMaterial;
+          else obj.material = platinumMaterial;
 
           obj.frustumCulled = false;
         });
-
-        console.log("✅ STONES FOUND:", stoneCount);
-        console.log("✅ METAL PARTS FOUND:", metalCount);
 
         // Center + scale
         const box = new THREE.Box3().setFromObject(model);
@@ -181,15 +165,14 @@
       undefined,
       (err) => {
         console.error("❌ GLB load error:", err);
-        alert("GLB failed to load. Check Drive sharing: Anyone with link = Viewer");
+        alert("GLB failed to load. Check Google Drive sharing = Anyone with link Viewer.");
       }
     );
 
-    // Controls: drag + inertia
+    // Drag + inertia
     let isDragging = false;
     let lastX = 0;
     let lastY = 0;
-
     let velX = 0;
     let velY = 0;
 
