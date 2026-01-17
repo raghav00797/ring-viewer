@@ -51,25 +51,23 @@
   </div>
 
   <script type="module">
-    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js";
+    // ✅ Use an import-map so loaders can import "three" correctly
+    import * as THREE from "https://unpkg.com/three@0.159.0/build/three.module.js";
 
-    // ✅ IMPORTANT: Use /addons/ paths (works in GitHub Pages)
-    import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.159.0/addons/loaders/GLTFLoader.js";
-    import { RGBELoader } from "https://cdn.jsdelivr.net/npm/three@0.159.0/addons/loaders/RGBELoader.js";
+    import { GLTFLoader } from "https://unpkg.com/three@0.159.0/examples/jsm/loaders/GLTFLoader.js";
+    import { RGBELoader } from "https://unpkg.com/three@0.159.0/examples/jsm/loaders/RGBELoader.js";
 
-    // ✅ Your Drive file ID (GLB)
+    // ✅ Your Drive file ID
     const DRIVE_FILE_ID = "1xQaoIODOj3p1vJjOzdoQf9qt9KaP9XuK";
 
     // ✅ Direct download URL
     const GLB_URL = `https://drive.google.com/uc?export=download&id=${DRIVE_FILE_ID}`;
 
-    // Canvas + Renderer
     const canvas = document.getElementById("c");
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    // ✅ Match your Trae render settings
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.3;
@@ -77,11 +75,10 @@
     const scene = new THREE.Scene();
     scene.background = new THREE.Color("#ffffff");
 
-    // Camera (similar feel to your R3F)
     const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.01, 250);
     camera.position.set(0, 2.8, 6);
 
-    // Lights (same idea as your Trae)
+    // Lights
     scene.add(new THREE.AmbientLight(0xffffff, 0.25));
 
     const l1 = new THREE.DirectionalLight(0xffffff, 6.3);
@@ -96,11 +93,11 @@
     l3.position.set(0, -12, -12);
     scene.add(l3);
 
-    // Group to rotate ring
+    // Rotate group
     const ringGroup = new THREE.Group();
     scene.add(ringGroup);
 
-    // ====== Materials (ported from your Trae code) ======
+    // Materials
     const platinumMaterial = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color("#d8d8d8"),
       metalness: 1,
@@ -114,29 +111,22 @@
       color: new THREE.Color("#ffffff"),
       metalness: 0,
       roughness: 0.005,
-
       transmission: 0.25,
       transparent: true,
       opacity: 1,
-
       ior: 2.42,
       thickness: 0.03,
-
       attenuationColor: new THREE.Color("#ffffff"),
       attenuationDistance: 999,
-
       envMapIntensity: 22,
       reflectivity: 1,
-
       clearcoat: 1,
       clearcoatRoughness: 0,
-
       specularIntensity: 10,
       specularColor: new THREE.Color(1, 1, 1),
     });
 
-    // ====== Environment HDR (for reflections) ======
-    // ✅ Public HDRI so it works instantly on GitHub Pages
+    // HDR environment
     const HDR_URL = "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr";
 
     new RGBELoader().load(HDR_URL, (hdr) => {
@@ -144,7 +134,7 @@
       scene.environment = hdr;
     });
 
-    // ====== Load GLB from Drive ======
+    // Load GLB
     const loader = new GLTFLoader();
     loader.load(
       GLB_URL,
@@ -168,14 +158,12 @@
           }
 
           obj.frustumCulled = false;
-          obj.castShadow = false;
-          obj.receiveShadow = false;
         });
 
         console.log("✅ STONES FOUND:", stoneCount);
         console.log("✅ METAL PARTS FOUND:", metalCount);
 
-        // Auto center
+        // Center + scale
         const box = new THREE.Box3().setFromObject(model);
         const size = new THREE.Vector3();
         const center = new THREE.Vector3();
@@ -183,14 +171,11 @@
         box.getCenter(center);
         model.position.sub(center);
 
-        // Auto scale (stable for any ring)
         const maxDim = Math.max(size.x, size.y, size.z);
         const scale = 1.7 / maxDim;
         model.scale.setScalar(scale);
 
         ringGroup.add(model);
-
-        // Start angle
         ringGroup.rotation.set(0.15, 0.8, 0);
       },
       undefined,
@@ -200,7 +185,7 @@
       }
     );
 
-    // ====== Drag rotate + inertia ======
+    // Controls: drag + inertia
     let isDragging = false;
     let lastX = 0;
     let lastY = 0;
@@ -240,7 +225,7 @@
       try { canvas.releasePointerCapture(e.pointerId); } catch {}
     });
 
-    // Zoom (wheel)
+    // Zoom
     window.addEventListener("wheel", (e) => {
       const delta = Math.sign(e.deltaY);
       camera.position.z += delta * 0.35;
@@ -270,11 +255,10 @@
       camera.updateProjectionMatrix();
     });
 
-    // Render loop
+    // Animate
     function animate() {
       requestAnimationFrame(animate);
 
-      // Inertia + auto rotate
       if (!isDragging) {
         ringGroup.rotation.y += velX;
         ringGroup.rotation.x += velY;
